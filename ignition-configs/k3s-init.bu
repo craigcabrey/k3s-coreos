@@ -1,0 +1,63 @@
+variant: fcos
+version: 1.4.0
+passwd:
+  users:
+    - name: core
+      ssh_authorized_keys:
+        - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDnhC0G4LFUsnjrtUjSPJSe2aLtvwBCNpxRIWk9pjVP/K1l5qj9crB4AXehGoERlARGUU7Fp8SANipjaglbl5LvAbaedUKZwBA9BdevCaBR2wR5PhtnZrgIWKn1SbX/Lb6k5EqbfXwzCSXEflhVpm1L/bQybvFmdgCj5TdMrDt0Nz4K4Lzrx5/pfvrgkprPHFtxRJrM5pfObDP83SX9YElUO5rye1uMSYOEe6kPoU3dldUwfnGrsAgBtm04NYxtIs95bUcLZh56eEXOj93zxi5/0z0cu/T00JXA10hjIWAIb9epVYYfww3A4VULAARAGxX7JzRHAG3TqiyKcjKjimUJQJz7xC09f+LXQ5pmzgk2XxmHtEMhnywQxcKyfZfCH3US+OBNVa8Y3XiG9v7BII99L9E7FaMd0ZvkCQSJM2OYcvK5d9zehA/ywg6Bt2XZU/AJE8uKXk5Wy2pBSLVcWt09cliX5qFYj3pnIo/PNBYccmhVKk4kmLD+9dJC4OpoCGc=
+        - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCtZaBFIafuqfupbOUsplaC9l7B9BqTXf1jxp1fGBxW2DsrUKKlTFcQhJG5KzMW+yqZDoy6IhxQuJWl6lXWA5IGr9ZQqArj2aSSG3IJEP93UofHKBxbr5BojkcDdP2I9j9WZ/QW+DEh6C86c1yxMDHe5s9HUra8x36ASm+V2snbm79DZnv/bvJ8TDkFlRTtkJBBsQhawRSVF3Pfq80ETwy51f99eEJoP4RKPAPfCwlcj6fN50UIGuskGG1quizUcnbiSywzVZlLW64WQDUvO+LfzxieD2LnTsZ9p1S9smGS5nQClqEVjLur4mAFMQwGLDcLLYCXGY8KVx1cEUUwwEsoIA2Jpm24LQjW2pPUjkPUZWhX7B7lPyvepeDoXQQ97eBuPiXzNVK2K1d3pxnaS2jQB6A8Hjx624lOoGMSywtZ5waMte77l8X/YlrIAo6NIQFAIR2GI6TnZmTtGNXTlvW1V83FwA03oYWfkFATdQEglZUaKnn6tWK5L2FFyW+qaws=
+storage:
+  files:
+    - path: /etc/hostname
+      mode: 0644
+      contents:
+        inline: beelink-node-1
+    - path: /etc/zincati/config.d/51-rollout-wariness.toml
+      contents:
+        inline: |
+          [identity]
+          rollout_wariness = 1.0
+    - path: /etc/zincati/config.d/55-update-strategy.toml
+      contents:
+        inline: |
+          [updates]
+          strategy = "fleet_lock"
+          [updates.fleet_lock]
+          base_url = "http://fleetlock.k8s.services.lan/"
+    - path: /usr/local/bin/setup-k3s.sh
+      mode: 0755
+      contents:
+        inline: |
+          #!/usr/bin/env sh
+
+          export INSTALL_K3S_SKIP_SELINUX_RPM="true"
+          export INSTALL_K3S_VERSION="v1.25.4+k3s1"
+          export K3S_KUBECONFIG_MODE="644"
+
+          INTERFACE="$(ip route show default | awk '/default/ {print $5}')"
+          IPV4_ADDR="$(ip -o -4 addr list ${INTERFACE} | awk '{print $4}' | cut -d/ -f1)"
+          IPV6_ADDR="$(ip -o -6 addr list ${INTERFACE} | awk '{print $4}' | cut -d/ -f1 | head -n1)"
+
+          export INSTALL_K3S_EXEC="server --cluster-init --node-ip ${IPV4_ADDR},${IPV6_ADDR} --cluster-cidr ${CLUSTER_CIDR} --service-cidr ${SERVICE_CIDR} --kube-controller-manager-arg=node-cidr-mask-size-ipv6=108 --flannel-ipv6-masq --disable servicelb --disable traefik --disable local-storage"
+
+          curl -sfL https://get.k3s.io | sh -
+systemd:
+  units:
+    - name: docker.service
+      mask: true
+    - name: setup-k3s.service
+      enabled: true
+      contents: |
+        [Unit]
+        After=network-online.target
+        Wants=network-online.target
+        ConditionPathExists=!/var/lib/k3s-installed
+
+        [Service]
+        RemainAfterExit=yes
+        Type=oneshot
+        ExecStart=/usr/local/bin/setup-k3s.sh
+        ExecStartPost=/usr/bin/touch /var/lib/k3s-installed
+
+        [Install]
+        WantedBy=multi-user.target
