@@ -33,14 +33,14 @@ storage:
           export INSTALL_K3S_SKIP_SELINUX_RPM="true"
           export INSTALL_K3S_VERSION="v1.25.4+k3s1"
           export K3S_KUBECONFIG_MODE="644"
-          export K3S_TOKEN="${K3S_TOKEN}"
+          export K3S_TOKEN="${SECRET_K3S_TOKEN}"
 
-          INTERFACE="$(ip route show default | awk '/default/ {print $5}')"
-          IPV4_ADDR="$(ip -o -4 addr list ${INTERFACE} | awk '{print $4}' | cut -d/ -f1)"
-          IPV6_ADDR="$(ip -o -6 addr list ${INTERFACE} | awk '{print $4}' | cut -d/ -f1 | head -n1)"
+          IGNITION_INTERACE="$(ip route show default | awk '/default/ {print $5}')"
+          IGNITION_IPV4_ADDR="$(ip -o -4 addr list ${IGNITION_INTERACE} | awk '{print $4}' | cut -d/ -f1)"
+          IGNITION_IPV6_ADDR="$(ip -o -6 addr list ${IGNITION_INTERACE} | awk '{print $4}' | cut -d/ -f1 | head -n1)"
 
           export K3S_URL="https://k8s.services.lan"
-          export INSTALL_K3S_EXEC="agent --node-ip $IPV4_ADDR,$IPV6_ADDR"
+          export INSTALL_K3S_EXEC="agent --node-ip ${IGNITION_IPV4_ADDR},${IGNITION_IPV6_ADDR}"
 
           curl -sfL https://get.k3s.io | sh -
 systemd:
