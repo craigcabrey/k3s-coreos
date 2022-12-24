@@ -39,7 +39,7 @@ storage:
           IGNITION_IPV4_ADDR="$(ip -o -4 addr list ${IGNITION_INTERFACE} | awk '{print $4}' | cut -d/ -f1)"
           IGNITION_IPV6_ADDR="$(ip -o -6 addr list ${IGNITION_INTERFACE} | awk '{print $4}' | cut -d/ -f1 | head -n1)"
 
-          export INSTALL_K3S_EXEC="server --server https://k8s.services.lan --node-ip ${IGNITION_IPV4_ADDR},${IGNITION_IPV6_ADDR} --cluster-cidr ${SECRET_CLUSTER_CIDR} --service-cidr ${SECRET_SERVICE_CIDR} --kube-controller-manager-arg=node-cidr-mask-size-ipv6=108 --flannel-ipv6-masq --disable servicelb --disable traefik --disable local-storage"
+          export INSTALL_K3S_EXEC="server --server https://k8s.services.lan --node-ip ${IGNITION_IPV4_ADDR},${IGNITION_IPV6_ADDR} --cluster-cidr ${SECRET_CLUSTER_CIDR} --service-cidr ${SECRET_SERVICE_CIDR} --kube-controller-manager-arg=node-cidr-mask-size-ipv6=108 --flannel-backend host-gw --flannel-ipv6-masq --disable servicelb --disable traefik --disable local-storage"
 
           curl -sfL https://get.k3s.io | sh -
 systemd:
