@@ -58,6 +58,7 @@ systemd:
         Type=oneshot
         ExecStart=/usr/local/bin/setup-k3s.sh
         ExecStartPost=/usr/bin/touch /var/lib/k3s-installed
+        ExecStartPost=/usr/bin/systemctl disable setup-k3s
 
         [Install]
         WantedBy=multi-user.target
