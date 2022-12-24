@@ -39,7 +39,7 @@ storage:
           IGNITION_IPV4_ADDR="$(ip -o -4 addr list ${IGNITION_INTERACE} | awk '{print $4}' | cut -d/ -f1)"
           IGNITION_IPV6_ADDR="$(ip -o -6 addr list ${IGNITION_INTERACE} | awk '{print $4}' | cut -d/ -f1 | head -n1)"
 
-          export K3S_URL="https://k8s.services.lan"
+          export K3S_URL="${SECRET_K3S_URL}"
           export INSTALL_K3S_EXEC="agent --node-ip ${IGNITION_IPV4_ADDR},${IGNITION_IPV6_ADDR}"
 
           curl -sfL https://get.k3s.io | sh -
